@@ -101,18 +101,18 @@ func SetRoute() {
 			if !AlarmBadAir {
 				AlarmBadAir = true
 				SendPush("Alert: Bad Air", "PM2.5: "+strconv.Itoa(gasd.PM25))
-			} else {
-				AlarmBadAir = false
 			}
+		} else {
+			AlarmBadAir = false
 		}
 
 		if gasd.Smoke {
 			if !AlarmSmoke {
 				AlarmSmoke = true
 				SendPush("Alert: Smoke", "Smoke sensor triggered")
-			} else {
-				AlarmSmoke = false
 			}
+		} else {
+			AlarmSmoke = false
 		}
 	})
 
