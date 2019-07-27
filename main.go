@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type StationData struct {
@@ -26,10 +27,20 @@ type HomeData struct {
 var sd [3]StationData
 var gasd GasData
 
-var online [3]bool
+var stalastupdate [3]int64
+var gaslastupdate int64
 
 func GetHomeData() HomeData {
-	fmt.Println("get")
+	CurTime := time.Now().Unix()
+	if CurTime-stalastupdate[1] > 6 {
+		sd[1] = StationData{-1, -1}
+	}
+	if CurTime-stalastupdate[1] > 6 {
+		sd[2] = StationData{-1, -1}
+	}
+	if CurTime-gaslastupdate > 6 {
+		gasd = GasData{-1}
+	}
 	return HomeData{S1: sd[1], S2: sd[2], Gas: gasd}
 }
 
@@ -56,6 +67,7 @@ func SetRoute() {
 		}
 		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
 		sd[id] = dat
+		stalastupdate[id] = time.Now().Unix()
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -68,6 +80,7 @@ func SetRoute() {
 			return
 		}
 		gasd = dat
+		gaslastupdate = time.Now().Unix()
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -78,6 +91,9 @@ func main() {
 	sd[1] = StationData{-1, -1}
 	sd[2] = StationData{-1, -1}
 	gasd = GasData{-1}
+	stalastupdate[1] = time.Now().Unix()
+	stalastupdate[2] = time.Now().Unix()
+	gaslastupdate = time.Now().Unix()
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
