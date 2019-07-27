@@ -97,18 +97,22 @@ func SetRoute() {
 		gaslastupdate = time.Now().Unix()
 		w.WriteHeader(http.StatusOK)
 
-		if gasd.PM25 > 2000 && !AlarmBadAir {
-			AlarmBadAir = true
-			SendPush("Alert: Bad Air", "PM2.5: "+string(gasd.PM25))
-		} else {
-			AlarmBadAir = false
+		if gasd.PM25 > 2000 {
+			if !AlarmBadAir {
+				AlarmBadAir = true
+				SendPush("Alert: Bad Air", "PM2.5: "+strconv.Itoa(gasd.PM25))
+			} else {
+				AlarmBadAir = false
+			}
 		}
 
-		if gasd.Smoke && !AlarmSmoke {
-			AlarmSmoke = true
-			SendPush("Alert: Smoke", "Smoke sensor triggered")
-		} else {
-			AlarmSmoke = false
+		if gasd.Smoke {
+			if !AlarmSmoke {
+				AlarmSmoke = true
+				SendPush("Alert: Smoke", "Smoke sensor triggered")
+			} else {
+				AlarmSmoke = false
+			}
 		}
 	})
 
