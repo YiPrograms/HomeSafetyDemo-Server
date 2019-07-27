@@ -49,7 +49,7 @@ func GetHomeData() HomeData {
 	if CurTime-stalastupdate[1] > 6 {
 		sd[1] = StationData{-1, -1}
 	}
-	if CurTime-stalastupdate[1] > 6 {
+	if CurTime-stalastupdate[2] > 6 {
 		sd[2] = StationData{-1, -1}
 	}
 	if CurTime-gaslastupdate > 12 {
