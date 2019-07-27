@@ -1,38 +1,36 @@
-
 package main
 
 import (
 	"encoding/json"
-	"log"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 )
 
 type StationData struct {
-	Temp int
+	Temp  int
 	Humid int
 }
 
 type GasData struct {
-	
 }
 
 type HomeData struct {
-	S1 StationData
-	S2 StationData
+	S1  StationData
+	S2  StationData
 	Gas GasData
 }
 
-
 var sd [3]StationData
 var gasd GasData
+
+var online [3]bool
 
 func GetHomeData() HomeData {
 	fmt.Println("get")
 	return HomeData{S1: sd[1], S2: sd[2], Gas: gasd}
 }
-
 
 func SetRoute() {
 	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +46,6 @@ func SetRoute() {
 		w.Write(b)
 	})
 
-	
 	http.HandleFunc("/stationupdate", func(w http.ResponseWriter, req *http.Request) {
 		decoder := json.NewDecoder(req.Body)
 		var dat StationData
@@ -57,16 +54,17 @@ func SetRoute() {
 			fmt.Println(err)
 			return
 		}
-		id , _:= strconv.Atoi(req.URL.Query().Get("id"))
+		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
 		sd[id] = dat
+		w.WriteHeader(http.StatusOK)
 	})
 
 }
 
 func main() {
-	SetRoute();
-	sd[1] = StationData{100,50}
-	sd[2] = StationData{1000,550}
-	
+	SetRoute()
+	sd[1] = StationData{100, 50}
+	sd[2] = StationData{1000, 550}
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
