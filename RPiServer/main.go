@@ -63,7 +63,7 @@ func GetHomeData() HomeData {
 	if CurTime-gaslastupdate > 12 {
 		gasd = GasData{-1, false}
 	}
-	return HomeData{S1: sd[1], S2: sd[2], Gas: gasd}
+	return HomeData{sd[1], sd[2], gasd, AlertsHist}
 }
 
 func SetRoute() {
