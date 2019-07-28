@@ -17,10 +17,16 @@ type GasData struct {
 	Smoke bool
 }
 
+type Alert struct {
+	Title string
+	Body  string
+}
+
 type HomeData struct {
 	S1  StationData
 	S2  StationData
 	Gas GasData
+	Alerts []Alert
 }
 
 var data HomeData

@@ -27,10 +27,16 @@ type GasData struct {
 	Smoke bool
 }
 
+type Alert struct {
+	Title string
+	Body  string
+}
+
 type HomeData struct {
-	S1  StationData
-	S2  StationData
-	Gas GasData
+	S1     StationData
+	S2     StationData
+	Gas    GasData
+	Alerts []Alert
 }
 
 var conf Config
@@ -43,6 +49,8 @@ var gaslastupdate int64
 
 var AlarmBadAir bool = false
 var AlarmSmoke bool = false
+
+var AlertsHist []Alert
 
 func GetHomeData() HomeData {
 	CurTime := time.Now().Unix()
@@ -107,6 +115,7 @@ func SetRoute() {
 			if !AlarmBadAir {
 				AlarmBadAir = true
 				SendPush("Alert: Bad Air", "PM2.5: "+strconv.Itoa(gasd.PM25))
+				AlertsHist = append(AlertsHist, Alert{"Alert: Bad Air", "PM2.5: " + strconv.Itoa(gasd.PM25)})
 			}
 		} else {
 			AlarmBadAir = false
@@ -116,6 +125,7 @@ func SetRoute() {
 			if !AlarmSmoke {
 				AlarmSmoke = true
 				SendPush("Alert: Smoke", "Smoke sensor triggered")
+				AlertsHist = append(AlertsHist, Alert{"Alert: Smoke", "Smoke sensor triggered"})
 			}
 		} else {
 			AlarmSmoke = false
