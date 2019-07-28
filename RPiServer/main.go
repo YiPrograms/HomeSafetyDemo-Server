@@ -83,6 +83,7 @@ func SetRoute() {
 		sd[id] = dat
 		stalastupdate[id] = time.Now().Unix()
 		w.WriteHeader(http.StatusOK)
+		fmt.Println(req.Body)
 	})
 
 	http.HandleFunc("/airupdate", func(w http.ResponseWriter, req *http.Request) {
