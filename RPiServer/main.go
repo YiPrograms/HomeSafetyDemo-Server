@@ -158,7 +158,7 @@ func SendToRouter() {
 		json.NewEncoder(b).Encode(dat)
 		http.Post(url, "application/json; charset=utf-8", b)
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
 
