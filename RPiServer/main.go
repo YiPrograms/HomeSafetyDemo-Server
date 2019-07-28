@@ -133,7 +133,7 @@ func SendPush(Title string, Body string) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	defer resp.Body.Close()
 
@@ -144,7 +144,8 @@ func SendPush(Title string, Body string) {
 
 func SendToRouter() {
 	for {
-		url := "http://homesafetydemo.ml/update"
+		fmt.Println("Update")
+		url := "http://homesafetydemo.ml:8080/update"
 		dat := GetHomeData()
 		b, err := json.Marshal(dat)
 		var jsonStr = []byte(b)
@@ -154,7 +155,7 @@ func SendToRouter() {
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
 		defer resp.Body.Close()
 
