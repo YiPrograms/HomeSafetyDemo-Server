@@ -1,20 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/NaySoftware/go-fcm"
 )
 
 type Config struct {
-	Token     string
-	ServerKey string
+	API_KEY string
+	APP_ID  string
 }
 
 type StationData struct {
@@ -119,24 +119,48 @@ func SetRoute() {
 }
 
 func SendPush(Title string, Body string) {
-	var NP fcm.NotificationPayload
-	NP.Title = Title
-	NP.Body = Body
+	url := "https://onesignal.com/api/v1/notifications"
+	var jsonStr = []byte(`{
+		"app_id": "` + conf.APP_ID + `",
+		"included_segments": ["Active Users"],
+		"contents": {"en": "` + Body + `"},
+		"headings": {"en": "` + Title + `"}
+	}`)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req.Header.Set("Authorization", "Basic "+conf.API_KEY)
+	req.Header.Set("Content-Type", "application/json")
 
-	data := map[string]string{}
-
-	ids := []string{
-		conf.Token,
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
 	}
+	defer resp.Body.Close()
 
-	c := fcm.NewFcmClient(conf.ServerKey)
-	c.NewFcmRegIdsMsg(ids, data)
-	c.SetNotificationPayload(&NP)
-	status, err := c.Send()
-	if err == nil {
-		status.PrintResults()
-	} else {
-		fmt.Println(err)
+	fmt.Println("Push HTTP Status:", resp.Status)
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("Push Response:", string(body))
+}
+
+func SendToRouter() {
+	for {
+		url := "http://homesafetydemo.ml/update"
+		dat := GetHomeData()
+		b, err := json.Marshal(dat)
+		var jsonStr = []byte(b)
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			panic(err)
+		}
+		defer resp.Body.Close()
+
+		fmt.Println("Update Status:", resp.Status)
+
+		time.Sleep(2 * time.Second)
 	}
 }
 
@@ -160,5 +184,6 @@ func main() {
 	stalastupdate[2] = time.Now().Unix()
 	gaslastupdate = time.Now().Unix()
 
+	go SendToRouter()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
