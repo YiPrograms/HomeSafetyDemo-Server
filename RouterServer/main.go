@@ -53,5 +53,5 @@ func main() {
 	SetRoute()
 	data = HomeData{StationData{-1, -1}, StationData{-1, -1}, GasData{-1, false}}
 
-	log.Fatal(http.ListenAndServe(":80", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
