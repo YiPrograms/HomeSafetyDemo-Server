@@ -23,9 +23,9 @@ type Alert struct {
 }
 
 type HomeData struct {
-	S1  StationData
-	S2  StationData
-	Gas GasData
+	S1     StationData
+	S2     StationData
+	Gas    GasData
 	Alerts []Alert
 }
 
@@ -65,7 +65,7 @@ func SetRoute() {
 
 func main() {
 	SetRoute()
-	data = HomeData{StationData{-1, -1}, StationData{-1, -1}, GasData{-1, false}}
+	data = HomeData{StationData{-1, -1}, StationData{-1, -1}, GasData{-1, false}, nil}
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
