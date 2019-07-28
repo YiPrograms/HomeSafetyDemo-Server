@@ -30,6 +30,7 @@ type GasData struct {
 type Alert struct {
 	Title string
 	Body  string
+	Time  int64
 }
 
 type HomeData struct {
@@ -109,7 +110,7 @@ func SetRoute() {
 			if !AlarmBadAir {
 				AlarmBadAir = true
 				SendPush("Alert: Bad Air", "PM2.5: "+strconv.Itoa(gasd.PM25))
-				AlertsHist = append(AlertsHist, Alert{"Alert: Bad Air", "PM2.5: " + strconv.Itoa(gasd.PM25)})
+				AlertsHist = append(AlertsHist, Alert{"Alert: Bad Air", "PM2.5: " + strconv.Itoa(gasd.PM25)}, time.Now().Unix())
 			}
 		} else {
 			AlarmBadAir = false
@@ -119,7 +120,7 @@ func SetRoute() {
 			if !AlarmSmoke {
 				AlarmSmoke = true
 				SendPush("Alert: Smoke", "Smoke sensor triggered")
-				AlertsHist = append(AlertsHist, Alert{"Alert: Smoke", "Smoke sensor triggered"})
+				AlertsHist = append(AlertsHist, Alert{"Alert: Smoke", "Smoke sensor triggered"}, time.Now().Unix())
 			}
 		} else {
 			AlarmSmoke = false

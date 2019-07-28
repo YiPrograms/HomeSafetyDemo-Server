@@ -20,6 +20,7 @@ type GasData struct {
 type Alert struct {
 	Title string
 	Body  string
+	Time  int64
 }
 
 type HomeData struct {
