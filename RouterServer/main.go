@@ -46,6 +46,7 @@ func SetRoute() {
 		}
 		w.WriteHeader(http.StatusOK)
 		fmt.Println("Get Update")
+		fmt.Println(req.Body)
 	})
 
 }
