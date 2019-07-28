@@ -52,7 +52,7 @@ func SetRoute() {
 		}
 
 		fmt.Println("Get Update")
-		fmt.Println(dat.S1.Temp)
+		data = dat
 	})
 
 }
