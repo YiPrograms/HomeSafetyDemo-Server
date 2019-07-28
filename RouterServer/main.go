@@ -38,15 +38,20 @@ func SetRoute() {
 	})
 
 	http.HandleFunc("/update", func(w http.ResponseWriter, req *http.Request) {
-		decoder := json.NewDecoder(req.Body)
-		err := decoder.Decode(&data)
-		if err != nil {
-			fmt.Println(err)
+
+		if req.Body == nil {
+			http.Error(w, "Please send a request body", 400)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
+
+		err := json.NewDecoder(req.Body).Decode(&data)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+
 		fmt.Println("Get Update")
-		fmt.Println(req.Body)
+		fmt.Println(data.S1.Temp)
 	})
 
 }

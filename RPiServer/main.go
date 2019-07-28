@@ -147,19 +147,10 @@ func SendToRouter() {
 		fmt.Println("Update")
 		url := "http://homesafetydemo.ml:8080/update"
 		dat := GetHomeData()
-		b, err := json.Marshal(dat)
-		var jsonStr = []byte(b)
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-		req.Header.Set("Content-Type", "application/json")
 
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println(err)
-		}
-		defer resp.Body.Close()
-
-		fmt.Println("Update Status:", resp.Status)
+		b := new(bytes.Buffer)
+		json.NewEncoder(b).Encode(dat)
+		http.Post(url, "application/json; charset=utf-8", b)
 
 		time.Sleep(2 * time.Second)
 	}
