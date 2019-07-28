@@ -44,14 +44,15 @@ func SetRoute() {
 			return
 		}
 
-		err := json.NewDecoder(req.Body).Decode(&data)
+		var dat HomeData
+		err := json.NewDecoder(req.Body).Decode(&dat)
 		if err != nil {
 			http.Error(w, err.Error(), 400)
 			return
 		}
 
 		fmt.Println("Get Update")
-		fmt.Println(req.Body)
+		fmt.Println(dat.S1.Temp)
 	})
 
 }
