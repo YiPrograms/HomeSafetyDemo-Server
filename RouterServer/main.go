@@ -35,7 +35,7 @@ type HomeData struct {
 
 var data HomeData
 
-var int ClientCount = 0
+var ClientCount int = 0
 
 func SetRoute() {
 	upgrader := &websocket.Upgrader{
@@ -48,7 +48,7 @@ func SetRoute() {
 		fmt.Println("Client Connected!")
 		ClientCount++
 		fmt.Println("Client Count:", ClientCount)
-		c, err := upgrader.Upgrade(w, req, nil)
+		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			fmt.Println("Upgrade:", err)
 			return
@@ -90,7 +90,7 @@ func SetRoute() {
 
 		for {
 			c.SetReadDeadline(time.Now().Add(time.Second * 20))
-			_, msg, errr := c.ReadMessage()
+			_, msg, _ := c.ReadMessage()
 
 			var dat HomeData
 			err := json.Unmarshal(msg, &dat)
