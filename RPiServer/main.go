@@ -71,7 +71,7 @@ func SendAirData(c *websocket.Conn, id int, AirUpdate chan int) {
 	}
 }
 
-func SetRoute() {
+func SetRoute(HaveUpdate chan int) {
 	upgrader := &websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool { return true },
 	}
@@ -129,6 +129,7 @@ func SetRoute() {
 			}
 
 			sd[id] = dat
+			HaveUpdate <- 1
 		}
 	})
 
@@ -187,6 +188,8 @@ func SetRoute() {
 			} else {
 				AlarmSmoke = false
 			}
+
+			HaveUpdate <- 1
 		}
 	})
 
@@ -216,17 +219,36 @@ func SendPush(Title string, Body string) {
 	fmt.Println("Push Response:", string(body))
 }
 
-func SendToRouter() {
+func ConnectToRouter(HaveUpdate chan int) {
 	for {
-		fmt.Println("Update")
-		url := "http://homesafetydemo.ml:8080/update"
+		SendToRouter(HaveUpdate)
+		time.Sleep(2 * time.Second)
+	}
+}
+
+func SendToRouter(HaveUpdate chan int) {
+	url := "http://homesafetydemo.ml:8080/update"
+
+	c, _, err := websocket.DefaultDialer.Dial(url, nil)
+	if err != nil {
+		log.Fatal("Dial:", err)
+		return
+	}
+	defer func() {
+		fmt.Printf("Disconnected to %s", url)
+		c.Close()
+	}()
+	fmt.Printf("Connected to %s", url)
+
+	for {
+		fmt.Println("Send Update")
+
 		dat := GetHomeData()
 
 		b := new(bytes.Buffer)
 		json.NewEncoder(b).Encode(dat)
 		http.Post(url, "application/json; charset=utf-8", b)
-
-		time.Sleep(1 * time.Second)
+		<-HaveUpdate
 	}
 }
 
@@ -242,10 +264,11 @@ func LoadConfiguration(file string) {
 
 func main() {
 	LoadConfiguration("config.json")
-	SetRoute()
+	HaveUpdate := make(chan int)
+	SetRoute(HaveUpdate)
 	sd[1] = StationData{-1, -1}
 	sd[2] = StationData{-1, -1}
 	gasd = GasData{-1, false}
-	go SendToRouter()
+	go ConnectToRouter(HaveUpdate)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
