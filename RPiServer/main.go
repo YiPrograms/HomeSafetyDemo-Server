@@ -272,6 +272,7 @@ func main() {
 	sd[1] = StationData{-1, -1}
 	sd[2] = StationData{-1, -1}
 	gasd = GasData{-1, false}
+	AlertsHist = append(AlertsHist, Alert{"-1", "-1", time.Now().Unix()})
 	go ConnectToRouter(HaveUpdate)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
