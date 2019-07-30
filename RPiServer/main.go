@@ -244,10 +244,13 @@ func SendToRouter(HaveUpdate chan int) {
 		fmt.Println("Send Update")
 
 		dat := GetHomeData()
+		msg, _ := json.Marshal(dat)
 
-		b := new(bytes.Buffer)
-		json.NewEncoder(b).Encode(dat)
-		http.Post(url, "application/json; charset=utf-8", b)
+		err := c.WriteMessage(websocket.TextMessage, msg)
+		if err != nil {
+			log.Println("Write to Station:", err)
+			break
+		}
 		<-HaveUpdate
 	}
 }

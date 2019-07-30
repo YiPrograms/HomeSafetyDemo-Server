@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -89,7 +88,6 @@ func SetRoute() {
 		}()
 
 		for {
-			c.SetReadDeadline(time.Now().Add(time.Second * 20))
 			_, msg, _ := c.ReadMessage()
 
 			var dat HomeData
