@@ -10,6 +10,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type Config struct {
@@ -45,8 +47,7 @@ var conf Config
 var sd [3]StationData
 var gasd GasData
 
-var stalastupdate [3]int64
-var gaslastupdate int64
+var connected [3]bool
 
 var AlarmBadAir bool = false
 var AlarmSmoke bool = false
@@ -54,20 +55,29 @@ var AlarmSmoke bool = false
 var AlertsHist []Alert
 
 func GetHomeData() HomeData {
-	CurTime := time.Now().Unix()
-	if CurTime-stalastupdate[1] > 6 {
-		sd[1] = StationData{-1, -1}
-	}
-	if CurTime-stalastupdate[2] > 6 {
-		sd[2] = StationData{-1, -1}
-	}
-	if CurTime-gaslastupdate > 12 {
-		gasd = GasData{-1, false}
-	}
 	return HomeData{sd[1], sd[2], gasd, AlertsHist}
 }
 
+func SendAirData(c *websocket.Conn, id int, AirUpdate chan int) {
+	for {
+		msg, err := json.Marshal(gasd)
+		fmt.Printf("Send %d: %s\n", id, msg)
+		err = c.WriteMessage(websocket.TextMessage, msg)
+		if err != nil {
+			log.Println("Write to Station:", err)
+			break
+		}
+		<-AirUpdate
+	}
+}
+
 func SetRoute() {
+	upgrader := &websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
+
+	AirUpdate := make(chan int)
+
 	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
 		dat := GetHomeData()
 		b, err := json.Marshal(dat)
@@ -81,49 +91,102 @@ func SetRoute() {
 	})
 
 	http.HandleFunc("/stationupdate", func(w http.ResponseWriter, req *http.Request) {
-		decoder := json.NewDecoder(req.Body)
-		var dat StationData
-		err := decoder.Decode(&dat)
-		if err != nil {
-			fmt.Println(err)
+		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
+		if connected[id] {
+			fmt.Println("Station", id, "Already connected!")
 			return
 		}
-		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
-		sd[id] = dat
-		stalastupdate[id] = time.Now().Unix()
-		w.WriteHeader(http.StatusOK)
+		fmt.Println("Station", id, "Connected!")
+		connected[id] = true
+		c, err := upgrader.Upgrade(w, req, nil)
+		if err != nil {
+			fmt.Println("Upgrade:", err)
+			return
+		}
+		defer func() {
+			fmt.Println("Station", id, "Disconnected!")
+			connected[id] = false
+			sd[id] = StationData{-1, -1}
+			c.Close()
+		}()
+
+		go SendAirData(c, id, AirUpdate)
+
+		for {
+			c.SetReadDeadline(time.Now().Add(time.Second * 5))
+			_, msg, errr := c.ReadMessage()
+			if errr != nil {
+				fmt.Println("Read:", err)
+				return
+			}
+			fmt.Printf("Receive %d: %s\n", id, msg)
+
+			var dat StationData
+			err := json.Unmarshal(msg, &dat)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			sd[id] = dat
+		}
 	})
 
 	http.HandleFunc("/airupdate", func(w http.ResponseWriter, req *http.Request) {
-		decoder := json.NewDecoder(req.Body)
-		var dat GasData
-		err := decoder.Decode(&dat)
+		fmt.Println("Air Connected!")
+		c, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Upgrade:", err)
 			return
 		}
-		gasd = dat
-		gaslastupdate = time.Now().Unix()
-		w.WriteHeader(http.StatusOK)
+		defer func() {
+			fmt.Println("Air Disconnected!")
+			c.Close()
+		}()
 
-		if gasd.PM25 > 2000 {
-			if !AlarmBadAir {
-				AlarmBadAir = true
-				SendPush("Alert: Bad Air", "PM2.5: "+strconv.Itoa(gasd.PM25))
-				AlertsHist = append(AlertsHist, Alert{"Bad Air", "PM2.5: " + strconv.Itoa(gasd.PM25), time.Now().Unix()})
+		for {
+			c.SetReadDeadline(time.Now().Add(time.Second * 12))
+			_, msg, errr := c.ReadMessage()
+			if errr != nil {
+				fmt.Println("Read:", errr)
+				return
 			}
-		} else {
-			AlarmBadAir = false
-		}
+			fmt.Printf("Receive Air: %s\n", msg)
 
-		if gasd.Smoke {
-			if !AlarmSmoke {
-				AlarmSmoke = true
-				SendPush("Alert: Smoke", "Smoke sensor triggered")
-				AlertsHist = append(AlertsHist, Alert{"Smoke", "Smoke sensor triggered", time.Now().Unix()})
+			var dat GasData
+			err := json.Unmarshal(msg, &dat)
+			if err != nil {
+				fmt.Println(err)
+				return
 			}
-		} else {
-			AlarmSmoke = false
+			gasd = dat
+
+			if connected[1] {
+				AirUpdate <- 1
+			}
+			if connected[2] {
+				AirUpdate <- 2
+			}
+
+			if gasd.PM25 > 2000 {
+				if !AlarmBadAir {
+					AlarmBadAir = true
+					SendPush("Alert: Bad Air", "PM2.5: "+strconv.Itoa(gasd.PM25))
+					AlertsHist = append(AlertsHist, Alert{"Bad Air", "PM2.5: " + strconv.Itoa(gasd.PM25), time.Now().Unix()})
+				}
+			} else {
+				AlarmBadAir = false
+			}
+
+			if gasd.Smoke {
+				if !AlarmSmoke {
+					AlarmSmoke = true
+					SendPush("Alert: Smoke", "Smoke sensor triggered")
+					AlertsHist = append(AlertsHist, Alert{"Smoke", "Smoke sensor triggered", time.Now().Unix()})
+				}
+			} else {
+				AlarmSmoke = false
+			}
 		}
 	})
 
@@ -183,10 +246,6 @@ func main() {
 	sd[1] = StationData{-1, -1}
 	sd[2] = StationData{-1, -1}
 	gasd = GasData{-1, false}
-	stalastupdate[1] = time.Now().Unix()
-	stalastupdate[2] = time.Now().Unix()
-	gaslastupdate = time.Now().Unix()
-
 	go SendToRouter()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
