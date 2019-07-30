@@ -227,7 +227,7 @@ func ConnectToRouter(HaveUpdate chan int) {
 }
 
 func SendToRouter(HaveUpdate chan int) {
-	url := "http://homesafetydemo.ml:8080/update"
+	url := "ws://homesafetydemo.ml:8080/update"
 
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
