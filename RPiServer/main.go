@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	"time"
 
@@ -183,6 +184,7 @@ func SetRoute(HaveUpdate chan int) {
 				if !AlarmSmoke {
 					AlarmSmoke = true
 					SendPush("Alert: Smoke", "Smoke sensor triggered")
+					go Buzz()
 					AlertsHist = append(AlertsHist, Alert{"Smoke", "Smoke sensor triggered", time.Now().Unix()})
 				}
 			} else {
@@ -193,6 +195,14 @@ func SetRoute(HaveUpdate chan int) {
 		}
 	})
 
+}
+
+func Buzz() {
+	cmd := exec.Command("aplay", "buzzer.wav")
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatalf("cmd.Run() failed with %s\n", err)
+	}
 }
 
 func SendPush(Title string, Body string) {
