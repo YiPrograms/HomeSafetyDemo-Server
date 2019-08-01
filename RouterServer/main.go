@@ -75,6 +75,17 @@ func SetRoute() {
 
 	})
 
+	http.HandleFunc("/httpget", func(w http.ResponseWriter, r *http.Request) {
+		b, err := json.Marshal(data)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+		w.Write(b)
+	})
+
 	http.HandleFunc("/update", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Println("RPi Connected!")
 		c, err := upgrader.Upgrade(w, req, nil)
