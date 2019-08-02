@@ -60,6 +60,10 @@ func GetHomeData() HomeData {
 }
 
 func SendAirData(c *websocket.Conn, id int, AirUpdate chan int) {
+	connected[id] = true
+	defer func() {
+		connected[id] = false
+	}()
 	for {
 		msg, err := json.Marshal(gasd)
 		fmt.Printf("Send %d: %s\n", id, msg)
@@ -98,7 +102,6 @@ func SetRoute(HaveUpdate chan int) {
 			return
 		}
 		fmt.Println("Station", id, "Connected!")
-		connected[id] = true
 		c, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
 			fmt.Println("Upgrade:", err)
@@ -106,7 +109,6 @@ func SetRoute(HaveUpdate chan int) {
 		}
 		defer func() {
 			fmt.Println("Station", id, "Disconnected!")
-			connected[id] = false
 			sd[id] = StationData{-1, -1}
 			c.Close()
 		}()
@@ -241,7 +243,7 @@ func SendToRouter(HaveUpdate chan int) {
 
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		log.Fatal("Dial:", err)
+		fmt.Println("Dial:", err)
 		return
 	}
 	defer func() {
