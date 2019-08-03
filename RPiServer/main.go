@@ -110,6 +110,7 @@ func SetRoute(HaveUpdate chan int) {
 		defer func() {
 			fmt.Println("Station", id, "Disconnected!")
 			sd[id] = StationData{-1, -1}
+			connected[id] = false
 			c.Close()
 		}()
 
@@ -199,7 +200,8 @@ func SetRoute(HaveUpdate chan int) {
 
 	http.HandleFunc("/airon", func(w http.ResponseWriter, req *http.Request) {
 		//fmt.Printf("Receive Air: %s\n", msg)
-		gasd = GasData{42, true}
+		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
+		gasd = GasData{id, true}
 
 		if connected[1] {
 			AirUpdate <- 1
@@ -234,7 +236,9 @@ func SetRoute(HaveUpdate chan int) {
 
 	http.HandleFunc("/airoff", func(w http.ResponseWriter, req *http.Request) {
 		//fmt.Printf("Receive Air: %s\n", msg)
-		gasd = GasData{52, false}
+
+		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
+		gasd = GasData{id, true}
 
 		if connected[1] {
 			AirUpdate <- 1
