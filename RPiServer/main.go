@@ -197,6 +197,76 @@ func SetRoute(HaveUpdate chan int) {
 		}
 	})
 
+	http.HandleFunc("/airon", func(w http.ResponseWriter, req *http.Request) {
+		//fmt.Printf("Receive Air: %s\n", msg)
+		gasd = GasData{42, true}
+
+		if connected[1] {
+			AirUpdate <- 1
+		}
+		if connected[2] {
+			AirUpdate <- 2
+		}
+
+		if gasd.PM25 > 2000 {
+			if !AlarmBadAir {
+				AlarmBadAir = true
+				SendPush("Alert: Bad Air", "PM2.5: "+strconv.Itoa(gasd.PM25))
+				AlertsHist = append(AlertsHist, Alert{"Bad Air", "PM2.5: " + strconv.Itoa(gasd.PM25), time.Now().Unix()})
+			}
+		} else {
+			AlarmBadAir = false
+		}
+
+		if gasd.Smoke {
+			if !AlarmSmoke {
+				AlarmSmoke = true
+				SendPush("Alert: Smoke", "Smoke sensor triggered")
+				go Buzz()
+				AlertsHist = append(AlertsHist, Alert{"Smoke", "Smoke sensor triggered", time.Now().Unix()})
+			}
+		} else {
+			AlarmSmoke = false
+		}
+
+		HaveUpdate <- 1
+	})
+
+	http.HandleFunc("/airoff", func(w http.ResponseWriter, req *http.Request) {
+		//fmt.Printf("Receive Air: %s\n", msg)
+		gasd = GasData{52, false}
+
+		if connected[1] {
+			AirUpdate <- 1
+		}
+		if connected[2] {
+			AirUpdate <- 2
+		}
+
+		if gasd.PM25 > 2000 {
+			if !AlarmBadAir {
+				AlarmBadAir = true
+				SendPush("Alert: Bad Air", "PM2.5: "+strconv.Itoa(gasd.PM25))
+				AlertsHist = append(AlertsHist, Alert{"Bad Air", "PM2.5: " + strconv.Itoa(gasd.PM25), time.Now().Unix()})
+			}
+		} else {
+			AlarmBadAir = false
+		}
+
+		if gasd.Smoke {
+			if !AlarmSmoke {
+				AlarmSmoke = true
+				SendPush("Alert: Smoke", "Smoke sensor triggered")
+				go Buzz()
+				AlertsHist = append(AlertsHist, Alert{"Smoke", "Smoke sensor triggered", time.Now().Unix()})
+			}
+		} else {
+			AlarmSmoke = false
+		}
+
+		HaveUpdate <- 1
+	})
+
 }
 
 func Buzz() {
