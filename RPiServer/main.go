@@ -238,7 +238,7 @@ func SetRoute(HaveUpdate chan int) {
 		//fmt.Printf("Receive Air: %s\n", msg)
 
 		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
-		gasd = GasData{id, true}
+		gasd = GasData{id, false}
 
 		if connected[1] {
 			AirUpdate <- 1
