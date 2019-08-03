@@ -99,6 +99,7 @@ func SetRoute(HaveUpdate chan int) {
 		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
 		if connected[id] {
 			fmt.Println("Station", id, "Already Connected!")
+			AirUpdate <- 1
 			return
 		}
 		fmt.Println("Station", id, "Connected!")
