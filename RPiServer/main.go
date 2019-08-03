@@ -110,7 +110,7 @@ func SetRoute(HaveUpdate chan int) {
 		defer func() {
 			fmt.Println("Station", id, "Disconnected!")
 			sd[id] = StationData{-1, -1}
-			connected[id] = false
+
 			c.Close()
 		}()
 
