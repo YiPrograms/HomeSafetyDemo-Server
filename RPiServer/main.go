@@ -97,6 +97,10 @@ func SetRoute(HaveUpdate chan int) {
 
 	http.HandleFunc("/stationupdate", func(w http.ResponseWriter, req *http.Request) {
 		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
+		if connected[id] {
+			fmt.Println("Station", id, "Already Connected!")
+			return
+		}
 		fmt.Println("Station", id, "Connected!")
 		c, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
