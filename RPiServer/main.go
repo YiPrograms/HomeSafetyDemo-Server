@@ -48,7 +48,7 @@ var conf Config
 var sd [3]StationData
 var gasd GasData
 
-var connected [3]bool
+var connected [3]int
 
 var AlarmBadAir bool = false
 var AlarmSmoke bool = false
@@ -60,9 +60,9 @@ func GetHomeData() HomeData {
 }
 
 func SendAirData(c *websocket.Conn, id int, AirUpdate chan int) {
-	connected[id] = true
+	connected[id]++
 	defer func() {
-		connected[id] = false
+		connected[id]--
 	}()
 	for {
 		msg, err := json.Marshal(gasd)
@@ -97,10 +97,6 @@ func SetRoute(HaveUpdate chan int) {
 
 	http.HandleFunc("/stationupdate", func(w http.ResponseWriter, req *http.Request) {
 		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
-		if connected[id] {
-			fmt.Println("Station", id, "Already connected!")
-			return
-		}
 		fmt.Println("Station", id, "Connected!")
 		c, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
@@ -110,7 +106,6 @@ func SetRoute(HaveUpdate chan int) {
 		defer func() {
 			fmt.Println("Station", id, "Disconnected!")
 			sd[id] = StationData{-1, -1}
-
 			c.Close()
 		}()
 
@@ -166,10 +161,10 @@ func SetRoute(HaveUpdate chan int) {
 			}
 			gasd = dat
 
-			if connected[1] {
+			for i := 0; i < connected[1]; i++ {
 				AirUpdate <- 1
 			}
-			if connected[2] {
+			for i := 0; i < connected[2]; i++ {
 				AirUpdate <- 2
 			}
 
@@ -203,10 +198,10 @@ func SetRoute(HaveUpdate chan int) {
 		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
 		gasd = GasData{id, true}
 
-		if connected[1] {
+		for i := 0; i < connected[1]; i++ {
 			AirUpdate <- 1
 		}
-		if connected[2] {
+		for i := 0; i < connected[2]; i++ {
 			AirUpdate <- 2
 		}
 
@@ -240,10 +235,10 @@ func SetRoute(HaveUpdate chan int) {
 		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
 		gasd = GasData{id, false}
 
-		if connected[1] {
+		for i := 0; i < connected[1]; i++ {
 			AirUpdate <- 1
 		}
-		if connected[2] {
+		for i := 0; i < connected[2]; i++ {
 			AirUpdate <- 2
 		}
 
