@@ -72,7 +72,12 @@ func SendAirData(c *websocket.Conn, id int, AirUpdate chan int) {
 			log.Println("Write to Station:", err)
 			break
 		}
-		<-AirUpdate
+		updid := <-AirUpdate
+		if updid != 0 && updid == id {
+			connected[id] = false
+			c.Close()
+			break
+		}
 	}
 }
 
@@ -98,8 +103,8 @@ func SetRoute(HaveUpdate chan int) {
 	http.HandleFunc("/stationupdate", func(w http.ResponseWriter, req *http.Request) {
 		id, _ := strconv.Atoi(req.URL.Query().Get("id"))
 		if connected[id] {
-			fmt.Println("Station", id, "Already Connected!")
-			AirUpdate <- 1
+			fmt.Println("Station", id, "Already Connected! Closing old connection")
+			AirUpdate <- id
 			return
 		}
 		fmt.Println("Station", id, "Connected!")
@@ -112,6 +117,7 @@ func SetRoute(HaveUpdate chan int) {
 			fmt.Println("Station", id, "Disconnected!")
 			sd[id] = StationData{-1, -1}
 			c.Close()
+			AirUpdate <- id
 		}()
 
 		go SendAirData(c, id, AirUpdate)
@@ -167,18 +173,11 @@ func SetRoute(HaveUpdate chan int) {
 			gasd = dat
 
 			if connected[1] {
-				AirUpdate <- 1
+				AirUpdate <- 0
 			}
 			if connected[2] {
-				AirUpdate <- 2
+				AirUpdate <- 0
 			}
-			/*
-				for i := 0; i < connected[1]; i++ {
-					AirUpdate <- 1
-				}
-				for i := 0; i < connected[2]; i++ {
-					AirUpdate <- 2
-				}*/
 
 			if gasd.PM25 > 2000 {
 				if !AlarmBadAir {
@@ -211,10 +210,10 @@ func SetRoute(HaveUpdate chan int) {
 		gasd = GasData{id, true}
 
 		if connected[1] {
-			AirUpdate <- 1
+			AirUpdate <- 0
 		}
 		if connected[2] {
-			AirUpdate <- 2
+			AirUpdate <- 0
 		}
 
 		if gasd.PM25 > 2000 {
@@ -248,10 +247,10 @@ func SetRoute(HaveUpdate chan int) {
 		gasd = GasData{id, false}
 
 		if connected[1] {
-			AirUpdate <- 1
+			AirUpdate <- 0
 		}
 		if connected[2] {
-			AirUpdate <- 2
+			AirUpdate <- 0
 		}
 
 		if gasd.PM25 > 2000 {
